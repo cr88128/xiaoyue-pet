@@ -1,0 +1,449 @@
+{
+  "schemaVersion": 5,
+  "app": {
+    "name": "小悦桌宠",
+    "appId": "com.xiaoyue.desktop-pet",
+    "version": "1.1.0",
+    "language": "zh-CN"
+  },
+  "targets": {
+    "windows": {
+      "enabled": true,
+      "arch": "x64"
+    },
+    "macos": {
+      "enabled": true,
+      "arch": "current"
+    }
+  },
+  "character": {
+    "inputType": "single-image",
+    "coreAsset": "core-ip/core-ip.png",
+    "displayName": "小悦",
+    "archetype": "person",
+    "personality": [
+      "温柔",
+      "恭敬",
+      "俏皮",
+      "勤快"
+    ],
+    "preserveTraits": [
+      "黑色齐肩短发",
+      "白色荷叶边女仆头饰",
+      "黑白女仆装",
+      "白色围裙",
+      "白色过膝长袜"
+    ],
+    "style": "preserve",
+    "mirrorSafe": true
+  },
+  "assetPipeline": {
+    "backgroundMode": "semantic-cutout",
+    "segmentationBackend": "auto",
+    "subjectKind": "photo",
+    "generationBackground": "transparent-grid",
+    "backgroundTolerance": 28,
+    "edgeFeather": 12,
+    "safeMargin": 24,
+    "targetOccupancy": 0.78
+  },
+  "experience": {
+    "theme": {
+      "primary": "#2C2C2C",
+      "accent": "#E8B4B8",
+      "background": "#FFF5F7",
+      "surface": "#FFFFFF",
+      "text": "#3A2B30",
+      "muted": "#A88A94",
+      "cornerRadius": 22
+    },
+    "petSizing": {
+      "baseWindowPx": 260,
+      "defaultScale": 1.2
+    },
+    "interactions": [
+      {
+        "id": "pet-head",
+        "emoji": "🤗",
+        "label": "摸摸头",
+        "stateId": "pet",
+        "durationMs": 1500,
+        "affectionGain": 3,
+        "feedback": [
+          "好舒服呀主人",
+          "再摸一下嘛",
+          "头发都要乱啦"
+        ]
+      },
+      {
+        "id": "kiss",
+        "emoji": "💋",
+        "label": "亲亲",
+        "stateId": "kiss",
+        "durationMs": 1500,
+        "affectionGain": 4,
+        "feedback": [
+          "mua~",
+          "主人好坏啦",
+          "脸都红了"
+        ]
+      },
+      {
+        "id": "meditate",
+        "emoji": "🧘",
+        "label": "冥想",
+        "stateId": "meditate",
+        "durationMs": 2000,
+        "affectionGain": 3,
+        "feedback": [
+          "呼...吸...",
+          "心静下来了",
+          "主人也试试？"
+        ]
+      },
+      {
+        "id": "bow",
+        "emoji": "🙇",
+        "label": "鞠躬·主人好",
+        "stateId": "bow",
+        "durationMs": 1800,
+        "affectionGain": 2,
+        "feedback": [
+          "主人好",
+          "今天也辛苦了",
+          "请吩咐"
+        ]
+      },
+      {
+        "id": "kneel",
+        "emoji": "🧎",
+        "label": "迎接主人回来",
+        "stateId": "kneel",
+        "durationMs": 2200,
+        "affectionGain": 5,
+        "feedback": [
+          "欢迎主人回来",
+          "您回来啦",
+          "小悦一直等着呢"
+        ]
+      }
+    ]
+  },
+  "motion": {
+    "breathing": {
+      "enabled": true,
+      "periodMs": 3200,
+      "scaleX": 0.012,
+      "scaleY": 0.022
+    },
+    "squashStretch": {
+      "enabled": true,
+      "durationMs": 320,
+      "intensity": 0.08
+    },
+    "idleIntervalMs": {
+      "min": 7000,
+      "max": 13000
+    }
+  },
+  "features": {
+    "transparentWindow": true,
+    "drag": true,
+    "tray": true,
+    "edgeSnap": true,
+    "reminders": true,
+    "interactions": true,
+    "relationship": true,
+    "filePocket": true,
+    "dashboard": true,
+    "typingReaction": false,
+    "autonomousMovement": false
+  },
+  "states": [
+    {
+      "id": "idle",
+      "triggers": [
+        "app:start",
+        "ambient:idle"
+      ],
+      "frames": [
+        "idle/idle-01.png",
+        "idle/idle-02.png",
+        "idle/idle-03.png",
+        "idle/idle-04.png",
+        "idle/idle-05.png"
+      ],
+      "frameDurationMs": 900,
+      "loop": true,
+      "priority": 10,
+      "interrupt": "resume",
+      "cooldownMs": 0,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "blink",
+      "triggers": [
+        "ambient:blink"
+      ],
+      "frames": [
+        "blink/blink-01.png",
+        "blink/blink-02.png",
+        "blink/blink-03.png",
+        "blink/blink-04.png",
+        "blink/blink-05.png"
+      ],
+      "frameDurationMs": 75,
+      "loop": false,
+      "priority": 30,
+      "interrupt": "restart",
+      "cooldownMs": 2500,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "happy",
+      "triggers": [
+        "pointer:tap"
+      ],
+      "frames": [
+        "happy/happy-01.png",
+        "happy/happy-02.png",
+        "happy/happy-03.png",
+        "happy/happy-04.png",
+        "happy/happy-05.png"
+      ],
+      "frameDurationMs": 110,
+      "loop": false,
+      "priority": 70,
+      "interrupt": "restart",
+      "cooldownMs": 300,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "notify",
+      "triggers": [
+        "reminder:due"
+      ],
+      "frames": [
+        "notify/notify-01.png",
+        "notify/notify-02.png",
+        "notify/notify-03.png",
+        "notify/notify-04.png",
+        "notify/notify-05.png"
+      ],
+      "frameDurationMs": 120,
+      "loop": false,
+      "priority": 95,
+      "interrupt": "restart",
+      "cooldownMs": 800,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "peek",
+      "triggers": [
+        "window:edge-snap"
+      ],
+      "frames": [
+        "peek/peek-01.png",
+        "peek/peek-02.png",
+        "peek/peek-03.png",
+        "peek/peek-04.png",
+        "peek/peek-05.png"
+      ],
+      "frameDurationMs": 120,
+      "loop": false,
+      "priority": 55,
+      "interrupt": "resume",
+      "cooldownMs": 1800,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "pet",
+      "triggers": [
+        "interaction:pet-head"
+      ],
+      "frames": [
+        "pet/pet-01.png",
+        "pet/pet-02.png",
+        "pet/pet-03.png",
+        "pet/pet-04.png",
+        "pet/pet-05.png"
+      ],
+      "frameDurationMs": 120,
+      "loop": false,
+      "priority": 85,
+      "interrupt": "restart",
+      "cooldownMs": 250,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "kiss",
+      "triggers": [
+        "interaction:kiss"
+      ],
+      "frames": [
+        "kiss/kiss-01.png",
+        "kiss/kiss-02.png",
+        "kiss/kiss-03.png",
+        "kiss/kiss-04.png",
+        "kiss/kiss-05.png"
+      ],
+      "frameDurationMs": 130,
+      "loop": false,
+      "priority": 85,
+      "interrupt": "restart",
+      "cooldownMs": 300,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "meditate",
+      "triggers": [
+        "interaction:meditate"
+      ],
+      "frames": [
+        "meditate/meditate-01.png",
+        "meditate/meditate-02.png",
+        "meditate/meditate-03.png",
+        "meditate/meditate-04.png",
+        "meditate/meditate-05.png"
+      ],
+      "frameDurationMs": 130,
+      "loop": false,
+      "priority": 85,
+      "interrupt": "restart",
+      "cooldownMs": 350,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "bow",
+      "triggers": [
+        "interaction:bow"
+      ],
+      "frames": [
+        "bow/bow-01.png",
+        "bow/bow-02.png",
+        "bow/bow-03.png",
+        "bow/bow-04.png",
+        "bow/bow-05.png"
+      ],
+      "frameDurationMs": 140,
+      "loop": false,
+      "priority": 85,
+      "interrupt": "restart",
+      "cooldownMs": 350,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "kneel",
+      "triggers": [
+        "interaction:kneel"
+      ],
+      "frames": [
+        "kneel/kneel-01.png",
+        "kneel/kneel-02.png",
+        "kneel/kneel-03.png",
+        "kneel/kneel-04.png",
+        "kneel/kneel-05.png"
+      ],
+      "frameDurationMs": 140,
+      "loop": false,
+      "priority": 85,
+      "interrupt": "restart",
+      "cooldownMs": 400,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    },
+    {
+      "id": "file-drop",
+      "triggers": [
+        "file:drop",
+        "file:drop-success",
+        "file:drop-fail"
+      ],
+      "frames": [
+        "file-drop/file-drop-01.png",
+        "file-drop/file-drop-02.png",
+        "file-drop/file-drop-03.png",
+        "file-drop/file-drop-04.png",
+        "file-drop/file-drop-05.png"
+      ],
+      "frameDurationMs": 130,
+      "loop": false,
+      "priority": 60,
+      "interrupt": "restart",
+      "cooldownMs": 500,
+      "direction": "neutral",
+      "anchor": {
+        "x": 0.5,
+        "y": 0.95
+      },
+      "mirrorSafe": true
+    }
+  ],
+  "storage": {
+    "userData": "app-user-data",
+    "filePocket": "documents-app-name"
+  },
+  "build": {
+    "windows": {
+      "arch": "x64",
+      "installer": "squirrel",
+      "portable": "zip"
+    },
+    "macos": {
+      "arch": "current",
+      "diskImage": "dmg",
+      "portable": "zip"
+    },
+    "timeoutMinutes": 20,
+    "unsigned": true
+  }
+}

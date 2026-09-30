@@ -1,0 +1,21 @@
+# 依赖与构建产物
+node_modules/
+.webpack/
+.build/
+out/
+release/
+
+# 原始素材与 QA 报告（处理后的素材在 src/assets/skins/）
+incoming-assets/
+qa/
+
+# 旧素材目录（已被 skins 取代，保留给本地兼容）
+src/assets/pet/
+
+# 内部构建契约（本地开发用，不上传）
+.doubao-pet-builder.json
+
+# 日志与系统文件
+*.log
+.DS_Store
+Thumbs.db
