@@ -7,6 +7,9 @@ import { musicControlTool } from './music-control';
 import { stockQueryTool } from './stock-query';
 import { webSearchTool } from './web-search';
 import { screenshotTool } from './screenshot';
+import { addTodoTool, listTodosTool, completeTodoTool } from './todo';
+import { addSystemCalendarTool } from './add-system-calendar';
+import { addSystemReminderTool } from './add-system-reminder';
 import type { RegisteredTool, ToolContext, ToolExecutionResult } from './types';
 
 export const ALL_TOOLS: RegisteredTool[] = [
@@ -18,6 +21,11 @@ export const ALL_TOOLS: RegisteredTool[] = [
   stockQueryTool,
   webSearchTool,
   screenshotTool,
+  addTodoTool,
+  listTodosTool,
+  completeTodoTool,
+  addSystemCalendarTool,
+  addSystemReminderTool,
 ];
 
 export function getActiveToolDefinitions(config: {

@@ -1,4 +1,4 @@
-import type { Reminder, Settings } from '../shared/contracts';
+import type { Reminder, Settings, Todo } from '../shared/contracts';
 
 export interface PersistedStats {
   affection: number;
@@ -25,9 +25,9 @@ export function localDateKey(date = new Date()): string {
 
 export function parseSettings(value: unknown): Settings {
   const obj = record(value, 'settings');
-  const expected = new Set(['edgeSnap', 'alwaysOnTop', 'typingReaction', 'clickThrough', 'petScale', 'skin']);
+  const expected = new Set(['edgeSnap', 'alwaysOnTop', 'typingReaction', 'clickThrough', 'petScale', 'skin', 'voiceAnnounce']);
   for (const key of Object.keys(obj)) if (!expected.has(key)) throw new TypeError(`Unknown settings field: ${key}`);
-  for (const key of ['edgeSnap', 'alwaysOnTop', 'typingReaction', 'clickThrough'] as const) {
+  for (const key of ['edgeSnap', 'alwaysOnTop', 'typingReaction', 'clickThrough', 'voiceAnnounce'] as const) {
     if (typeof obj[key] !== 'boolean') throw new TypeError(`Invalid settings field: ${key}`);
   }
   if (typeof obj.petScale !== 'number' || !Number.isFinite(obj.petScale) || !PET_SCALES.includes(obj.petScale as typeof PET_SCALES[number])) {
@@ -40,6 +40,7 @@ export function parseSettings(value: unknown): Settings {
     clickThrough: obj.clickThrough as boolean,
     petScale: obj.petScale,
     skin: typeof obj.skin === 'string' && obj.skin ? obj.skin : 'default',
+    voiceAnnounce: obj.voiceAnnounce as boolean,
   };
 }
 
@@ -74,6 +75,27 @@ export function parseReminders(value: unknown): Reminder[] {
     if (typeof obj.dueAt !== 'string' || !Number.isFinite(Date.parse(obj.dueAt))) throw new TypeError('Invalid reminder dueAt');
     if (typeof obj.createdAt !== 'string' || !Number.isFinite(Date.parse(obj.createdAt))) throw new TypeError('Invalid reminder createdAt');
     return { id: obj.id, text: obj.text, dueAt: obj.dueAt, createdAt: obj.createdAt };
+  });
+}
+
+export function parseTodos(value: unknown): Todo[] {
+  if (!Array.isArray(value)) throw new TypeError('Invalid todos');
+  return value.map((item) => {
+    const obj = record(item, 'todo');
+    if (typeof obj.id !== 'string' || obj.id.length < 1 || obj.id.length > 100) throw new TypeError('Invalid todo id');
+    if (typeof obj.text !== 'string' || obj.text.trim().length < 1 || obj.text.length > 500) throw new TypeError('Invalid todo text');
+    if (typeof obj.completed !== 'boolean') throw new TypeError('Invalid todo completed');
+    if (obj.dueAt !== undefined && (typeof obj.dueAt !== 'string' || !Number.isFinite(Date.parse(obj.dueAt)))) throw new TypeError('Invalid todo dueAt');
+    if (obj.completedAt !== undefined && (typeof obj.completedAt !== 'string' || !Number.isFinite(Date.parse(obj.completedAt)))) throw new TypeError('Invalid todo completedAt');
+    if (typeof obj.createdAt !== 'string' || !Number.isFinite(Date.parse(obj.createdAt))) throw new TypeError('Invalid todo createdAt');
+    return {
+      id: obj.id,
+      text: obj.text,
+      dueAt: obj.dueAt as string | undefined,
+      completed: obj.completed,
+      completedAt: obj.completedAt as string | undefined,
+      createdAt: obj.createdAt,
+    };
   });
 }
 

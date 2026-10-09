@@ -13,7 +13,8 @@ const defaults: Settings = {
   typingReaction: false,
   clickThrough: false,
   petScale: 1,
-    skin: 'default',
+  skin: 'default',
+  voiceAnnounce: true,
 };
 
 test('atomic JSON persistence round-trips without temporary files', async () => {

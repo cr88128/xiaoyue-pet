@@ -72,6 +72,7 @@ module.exports = {
             { html: './src/renderer/reminder/index.html', js: './src/renderer/reminder/index.ts', name: 'reminder_window', preload: { js: './src/preload.ts' } },
             { html: './src/renderer/dashboard/index.html', js: './src/renderer/dashboard/index.ts', name: 'dashboard_window', preload: { js: './src/preload.ts' } },
             { html: './src/renderer/chat/index.html', js: './src/renderer/chat/index.ts', name: 'chat_window', preload: { js: './src/preload.ts' } },
+            { html: './src/renderer/status/index.html', js: './src/renderer/status/index.ts', name: 'status_window', preload: { js: './src/preload.ts' } },
           ],
         },
       },

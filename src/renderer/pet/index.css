@@ -14,19 +14,23 @@ html, body {
 #pet-container {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
   position: relative;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  overflow: hidden;
 }
 
 #pet-sprite {
-  width: 100%;
+  /* 窗口已按立绘包围盒收紧。sprite 由 JS 按皮肤几何定位：
+     高度放大到立绘顶/底贴满窗口，水平居中，溢出部分由容器裁掉 */
+  position: absolute;
+  top: 0;
+  left: 0;
   height: 100%;
-  object-fit: contain;
+  width: auto;
+  max-width: none;
+  object-fit: fill;
   pointer-events: none;
   -webkit-user-drag: none;
   transform-origin: bottom center;
@@ -58,18 +62,23 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   background: white;
-  padding: 8px 16px;
-  border-radius: 16px;
-  font-size: 14px;
+  padding: 7px 12px;
+  border-radius: 14px;
+  font-size: 12.5px;
+  line-height: 1.4;
   color: #333;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   opacity: 0;
   transition: opacity 0.3s ease, transform 0.3s ease;
   pointer-events: none;
-  white-space: nowrap;
+  max-width: 250px;
+  white-space: normal;
+  word-break: break-all;
 }
 
 #feedback-bubble.show {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px);
 }
+
+

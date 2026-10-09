@@ -55,6 +55,23 @@ const api: PetAPI = {
     onTypingStatus: (listener) => subscribe<TypingStatus>('typing:status', listener),
     onScreenshotDone: (listener) => subscribe<{ file: string; size: { width: number; height: number } }>('screenshot:done', listener),
     onScreenshotFailed: (listener) => subscribe<{ message: string }>('screenshot:failed', listener),
+    onMonitorAlert: (listener) => subscribe<string>('monitor:alert', listener),
+  },
+  system: {
+    stats: () => ipcRenderer.invoke('system:stats'),
+    topMemory: () => ipcRenderer.invoke('system:top-memory'),
+    cleanupScan: () => ipcRenderer.invoke('system:cleanup-scan'),
+    cleanupRun: (ids) => ipcRenderer.invoke('system:cleanup-run', ids),
+    hoverShow: () => ipcRenderer.invoke('system:hover-start') as Promise<void>,
+    hoverHide: () => ipcRenderer.invoke('system:hover-end') as Promise<void>,
+    statusHoverStart: () => ipcRenderer.invoke('system:status-hover-start') as Promise<void>,
+    statusHoverEnd: () => ipcRenderer.invoke('system:status-hover-end') as Promise<void>,
+  },
+  todos: {
+    list: () => ipcRenderer.invoke('todos:list'),
+    add: (input) => ipcRenderer.invoke('todos:add', input),
+    toggle: (id) => ipcRenderer.invoke('todos:toggle', id) as Promise<boolean>,
+    remove: (id) => ipcRenderer.invoke('todos:remove', id) as Promise<boolean>,
   },
   chat: {
     send: (content, handlers) => new Promise<void>((resolve, reject) => {

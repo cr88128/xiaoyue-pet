@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"/>  <title>系统状态</title>  <style>* { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        background: transparent;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+        font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      #status-card {
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 247, 237, 0.94);
+        border: 1px solid rgba(255, 138, 36, 0.35);
+        border-radius: 14px;
+        padding: 10px 14px;
+        box-shadow: 0 6px 20px rgba(80, 40, 10, 0.18);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: #3a2a20;
+        white-space: nowrap;
+      }
+      .row .label { color: #9a7b6a; min-width: 30px; }
+      .row .bar-wrap {
+        flex: 1;
+        height: 5px;
+        border-radius: 3px;
+        background: #f3e4d5;
+        overflow: hidden;
+      }
+      .row .bar-wrap > div {
+        height: 100%;
+        border-radius: 3px;
+        background: #ff8a24;
+        transition: width 0.4s ease;
+      }
+      .row .bar-wrap > div.warn { background: #e04f4f; }
+      .row .val { min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+      .row .val small { color: #9a7b6a; font-size: 10.5px; }
+      .net-row .val { min-width: 86px; }</style>
+</head>
+<body><div id="status-card"><div class="row"><span class="label">🧠</span> <span>内存</span><div class="bar-wrap"><div id="mem-bar" style="width:0%"></div></div><span class="val" id="mem-val">--</span></div><div class="row"><span class="label">💽</span> <span>磁盘</span><div class="bar-wrap"><div id="disk-bar" style="width:0%"></div></div><span class="val" id="disk-val">--</span></div><div class="row"><span class="label">🔋</span> <span>电池</span><div class="bar-wrap"><div id="bat-bar" style="width:0%"></div></div><span class="val" id="bat-val">--</span></div><div class="row net-row"><span class="label">🌐</span> <span id="net-iface">--</span> <span class="val" id="net-val">↓ -- ↑ --</span></div></div></body>
+</html>

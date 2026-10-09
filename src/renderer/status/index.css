@@ -1,0 +1,4 @@
+/* 速览卡样式（body 透明由 index.html 内联控制，此处仅兜底） */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+

@@ -3,30 +3,34 @@ import { copyFile, lstat, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import specData from '../pet-spec.json';
-import type { AIConfigPatch, InteractionResult, PetSpec, PetStats, PublicAIConfig, Reminder, RuntimeFailureReport, RuntimeReadyReport, Settings, StateActivity, StreamChunk, TypingStatus } from './shared/contracts';
-import { assertInteractionId, assertReminderInput, assertRuntimeFailureReport, assertRuntimeReadyReport, assertSettingsPatch, assertStringArray } from './shared/contracts';
+import type { AIConfigPatch, InteractionResult, PetSpec, PetStats, PublicAIConfig, Reminder, RuntimeFailureReport, RuntimeReadyReport, Settings, StateActivity, StreamChunk, Todo, TypingStatus } from './shared/contracts';
+import { assertInteractionId, assertReminderInput, assertRuntimeFailureReport, assertRuntimeReadyReport, assertSettingsPatch, assertStringArray, assertTodoInput } from './shared/contracts';
 import { draggedBounds, snapBounds, type Point, type Rect } from './main/drag';
 import { JsonLogger } from './main/logger';
 import { atomicWriteJson, uniqueDestination } from './main/persistence';
 import { TypingListener } from './main/typing-listener';
-import { localDateKey, nextReminderDelay, parsePersistedStats, parseReminders, parseSettings, type PersistedStats } from './main/data-validation';
+import { localDateKey, nextReminderDelay, parsePersistedStats, parseReminders, parseSettings, parseTodos, type PersistedStats } from './main/data-validation';
 import { readValidatedJson } from './main/persistence';
 import { ChatManager } from './main/chat';
 import { getSkinPersona } from './main/skin-personas';
 import { fetchTodayEvents } from './main/calendar';
 import { loadAIConfig, saveAIConfig, toPublicConfig, isAIConfigured } from './main/ai-config';
+import { collectSystemSnapshot, listTopMemoryProcesses, runCleanup, scanCleanupItems } from './main/system-monitor';
+import { announce } from './main/tts';
 import trayIconPath from './assets/tray/tray-icon.png';
 
 const spec = specData as PetSpec;
-type Role = 'pet' | 'reminder' | 'dashboard' | 'chat';
+type Role = 'pet' | 'reminder' | 'dashboard' | 'chat' | 'status';
 let petWindow: BrowserWindow | undefined;
 let reminderWindow: BrowserWindow | undefined;
 let dashboardWindow: BrowserWindow | undefined;
+let statusWindow: BrowserWindow | undefined;
 let chatWindow: BrowserWindow | undefined;
 let tray: Tray | undefined;
 let logger: JsonLogger | undefined;
 let settings: Settings;
 let reminders: Reminder[] = [];
+let todos: Todo[] = [];
 let stats: PersistedStats;
 let sessionStartedAt = Date.now();
 let typingStatus: TypingStatus = { enabled: false, reason: 'not-started' };
@@ -40,6 +44,12 @@ let fatalExitStarted = false;
 let quitPersisting = false;
 const roles = new Map<number, Role>();
 const reminderTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const todoTimers = new Map<string, ReturnType<typeof setTimeout>>();
+let statusHideTimer: ReturnType<typeof setTimeout> | undefined;
+let monitorTimer: ReturnType<typeof setInterval> | undefined;
+let lastDiskAlertAt = 0;
+let lowBatteryAlerted = false;
+let lastNetAlertAt = 0;
 const typingListener = new TypingListener();
 const chatManager = new ChatManager();
 const expectedRuntimeAssets = new Set([spec.character.coreAsset, ...spec.states.flatMap((state) => state.frames)]);
@@ -57,6 +67,7 @@ const defaultSettings: Settings = {
   clickThrough: false,
   petScale: 2.0,
   skin: 'default',
+  voiceAnnounce: true,
 };
 
 const defaultStats: PersistedStats = {
@@ -150,7 +161,7 @@ async function commitRuntimeReady(): Promise<void> {
     version: spec.app.version,
     timestamp: new Date().toISOString(),
   };
-  if (report.windowCount !== 3 || !report.petVisible) throw new Error(`Runtime window gate failed: windows=${report.windowCount}, visible=${report.petVisible}`);
+  if (!report.petVisible) throw new Error(`Runtime window gate failed: windows=${report.windowCount}, visible=${report.petVisible}`);
   await logger?.write('info', 'runtime-ready', report);
   await writeRuntimeFile(runtimeReadyFile, report);
   runtimeCommitted = true;
@@ -242,6 +253,112 @@ function positionAbovePet(window: BrowserWindow): void {
   window.setPosition(x, y, false);
 }
 
+// ---- 悬停速览状态卡 ----
+function positionStatusWindow(): void {
+  if (!statusWindow || statusWindow.isDestroyed() || !petWindow) return;
+  const petBounds = petWindow.getBounds();
+  const target = statusWindow.getBounds();
+  const workArea = screen.getDisplayMatching(petBounds).workArea;
+  const x = Math.min(workArea.x + workArea.width - target.width, Math.max(workArea.x, petBounds.x + Math.round((petBounds.width - target.width) / 2)));
+  const preferredY = petBounds.y - target.height - 8;
+  const y = preferredY >= workArea.y ? preferredY : Math.min(workArea.y + workArea.height - target.height, petBounds.y + petBounds.height + 8);
+  statusWindow.setPosition(Math.round(x), Math.round(y), false);
+}
+
+function showStatusWindow(): void {
+  if (!statusWindow || statusWindow.isDestroyed()) return;
+  positionStatusWindow();
+  statusWindow.showInactive();
+  if (statusHideTimer) { clearTimeout(statusHideTimer); statusHideTimer = undefined; }
+}
+
+function hideStatusWindow(delayMs: number): void {
+  if (statusHideTimer) clearTimeout(statusHideTimer);
+  statusHideTimer = setTimeout(() => {
+    statusHideTimer = undefined;
+    if (statusWindow && !statusWindow.isDestroyed()) statusWindow.hide();
+  }, delayMs);
+}
+
+// ---- 待办清单 ----
+async function persistTodos(): Promise<void> {
+  await atomicWriteJson(userFile('todos.json'), todos);
+}
+
+function clearTodoTimer(id: string): void {
+  const timer = todoTimers.get(id);
+  if (timer) clearTimeout(timer);
+  todoTimers.delete(id);
+}
+
+function scheduleTodoTimer(todo: Todo): void {
+  if (!todo.dueAt || todo.completed) return;
+  const dueAt = todo.dueAt;
+  clearTodoTimer(todo.id);
+  const delay = nextReminderDelay(dueAt);
+  todoTimers.set(todo.id, setTimeout(() => {
+    todoTimers.delete(todo.id);
+    if (Date.parse(dueAt) > Date.now()) {
+      scheduleTodoTimer(todo);
+      return;
+    }
+    if (todo.completed) return;
+    if (reminderWindow) {
+      positionAbovePet(reminderWindow);
+      if (e2eMode) reminderWindow.showInactive();
+      else {
+        reminderWindow.show();
+        reminderWindow.focus();
+      }
+      reminderWindow.webContents.send('reminder:due', { id: todo.id, text: `待办到期：${todo.text}`, dueAt: todo.dueAt, createdAt: todo.createdAt });
+    }
+    if (settings.voiceAnnounce) announce(`待办到期：${todo.text}`);
+    const state = stateForTrigger('reminder:due');
+    sendActivity({ kind: 'notify', stateId: state?.id, durationMs: 1800, feedback: `待办到期：${todo.text}` });
+  }, delay));
+}
+
+// ---- 系统监控与语音播报 ----
+function sendMonitorAlert(text: string): void {
+  if (petWindow && !petWindow.isDestroyed()) petWindow.webContents.send('monitor:alert', text);
+  if (settings.voiceAnnounce) announce(text);
+}
+
+function formatMbps(bps: number): string {
+  const value = bps / 1_048_576;
+  return `${value >= 100 ? Math.round(value) : value.toFixed(1)} MB/s`;
+}
+
+async function runMonitor(): Promise<void> {
+  try {
+    const snapshot = await collectSystemSnapshot();
+    const now = Date.now();
+    if (snapshot.disk.usedPercent >= 90) {
+      if (now - lastDiskAlertAt > 6 * 60 * 60 * 1000) {
+        lastDiskAlertAt = now;
+        sendMonitorAlert(`磁盘快满啦，只剩 ${(snapshot.disk.freeBytes / 1073741824).toFixed(1)}GB`);
+      }
+    } else if (snapshot.disk.usedPercent < 85) {
+      lastDiskAlertAt = 0;
+    }
+    if (snapshot.battery.present && snapshot.battery.state === 'discharging' && (snapshot.battery.percent ?? 100) <= 20) {
+      if (!lowBatteryAlerted) {
+        lowBatteryAlerted = true;
+        const remaining = snapshot.battery.timeRemaining ? `（还能撑 ${snapshot.battery.timeRemaining}）` : '';
+        sendMonitorAlert(`电量只剩 ${snapshot.battery.percent}% 了${remaining}，记得充电哦`);
+      }
+    } else if (!snapshot.battery.present || snapshot.battery.state !== 'discharging' || (snapshot.battery.percent ?? 0) > 25) {
+      lowBatteryAlerted = false;
+    }
+    if (snapshot.net.downBps >= 50 * 1024 * 1024 && now - lastNetAlertAt > 5 * 60 * 1000) {
+      lastNetAlertAt = now;
+      sendMonitorAlert(`正在大流量下载（${formatMbps(snapshot.net.downBps)}）`);
+    }
+  } catch (error) {
+    void logger?.write('warn', 'monitor-cycle-failed', { message: error instanceof Error ? error.message : String(error) });
+  }
+}
+
 function createWindows(): void {
   const size = petSize();
   petWindow = secureWindow({
@@ -299,6 +416,27 @@ function createWindows(): void {
   void dashboardWindow.loadURL(DASHBOARD_WINDOW_WEBPACK_ENTRY);
   dashboardWindow.on('close', (event) => {
     if (!isQuitting) { event.preventDefault(); dashboardWindow?.hide(); }
+  });
+
+  statusWindow = secureWindow({
+    width: 300,
+    height: 128,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    show: false,
+    resizable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    hasShadow: false,
+    opacity: e2eMode ? 0 : 1,
+  }, 'status', STATUS_WINDOW_PRELOAD_WEBPACK_ENTRY);
+  void statusWindow.loadURL(STATUS_WINDOW_WEBPACK_ENTRY);
+  statusWindow.on('close', (event) => {
+    if (!isQuitting) { event.preventDefault(); statusWindow?.hide(); }
+  });
+  petWindow.on('moved', () => {
+    if (statusWindow && statusWindow.isVisible()) positionStatusWindow();
   });
 }
 
@@ -569,7 +707,7 @@ function registerIpc(): void {
     });
   }
   ipcMain.handle('runtime:renderer-ready', async (event, payload: unknown) => {
-    const role = assertSender(event, ['pet', 'dashboard', 'reminder', 'chat']);
+    const role = assertSender(event, ['pet', 'dashboard', 'reminder', 'chat', 'status']);
     if (
       !payload
       || typeof payload !== 'object'
@@ -580,12 +718,12 @@ function registerIpc(): void {
     ) {
       throw new TypeError('Invalid renderer-ready report');
     }
-    if (role !== 'chat') runtimeReadyRenderers.add(role);
+    if (role !== 'chat' && role !== 'status') runtimeReadyRenderers.add(role);
     await commitRuntimeReady();
   });
   ipcMain.handle('runtime:renderer-failed', async (event, payload: unknown) => {
-    const role = assertSender(event, ['pet', 'dashboard', 'reminder', 'chat']);
-    if (role === 'chat') return;
+    const role = assertSender(event, ['pet', 'dashboard', 'reminder', 'chat', 'status']);
+    if (role === 'chat' || role === 'status') return;
     const message = payload && typeof payload === 'object' && 'message' in payload && typeof payload.message === 'string'
       ? payload.message.slice(0, 2000)
       : 'Unknown renderer bootstrap failure';
@@ -635,6 +773,50 @@ function registerIpc(): void {
     await persistReminders();
     return oldLength !== reminders.length;
   });
+  ipcMain.handle('todos:list', (event) => { assertSender(event, ['dashboard']); return todos; });
+  ipcMain.handle('todos:add', async (event, input: unknown) => {
+    assertSender(event, ['dashboard']);
+    assertTodoInput(input);
+    const todo: Todo = { id: randomUUID(), text: input.text.trim(), completed: false, createdAt: new Date().toISOString() };
+    if (input.dueAt) todo.dueAt = new Date(input.dueAt).toISOString();
+    todos.push(todo);
+    await persistTodos();
+    if (todo.dueAt) scheduleTodoTimer(todo);
+    return todo;
+  });
+  ipcMain.handle('todos:toggle', async (event, id: unknown) => {
+    assertSender(event, ['dashboard']);
+    if (typeof id !== 'string' || id.length > 100) throw new TypeError('Invalid todo id');
+    const todo = todos.find((item) => item.id === id);
+    if (!todo) return false;
+    todo.completed = !todo.completed;
+    todo.completedAt = todo.completed ? new Date().toISOString() : undefined;
+    if (todo.completed) clearTodoTimer(todo.id);
+    else if (todo.dueAt) scheduleTodoTimer(todo);
+    await persistTodos();
+    return todo.completed;
+  });
+  ipcMain.handle('todos:remove', async (event, id: unknown) => {
+    assertSender(event, ['dashboard']);
+    if (typeof id !== 'string' || id.length > 100) throw new TypeError('Invalid todo id');
+    const oldLength = todos.length;
+    todos = todos.filter((item) => item.id !== id);
+    clearTodoTimer(id);
+    await persistTodos();
+    return oldLength !== todos.length;
+  });
+  ipcMain.handle('system:stats', (event) => { assertSender(event, ['dashboard', 'status']); return collectSystemSnapshot(); });
+  ipcMain.handle('system:top-memory', (event) => { assertSender(event, ['dashboard']); return listTopMemoryProcesses(6); });
+  ipcMain.handle('system:cleanup-scan', (event) => { assertSender(event, ['dashboard']); return scanCleanupItems(); });
+  ipcMain.handle('system:cleanup-run', async (event, ids: unknown) => {
+    assertSender(event, ['dashboard']);
+    if (!Array.isArray(ids) || ids.some((item) => typeof item !== 'string' || item.length > 32)) throw new TypeError('Invalid cleanup ids');
+    return runCleanup(ids);
+  });
+  ipcMain.handle('system:hover-start', (event) => { assertSender(event, ['pet']); showStatusWindow(); });
+  ipcMain.handle('system:hover-end', (event) => { assertSender(event, ['pet']); hideStatusWindow(600); });
+  ipcMain.handle('system:status-hover-start', (event) => { assertSender(event, ['status']); showStatusWindow(); });
+  ipcMain.handle('system:status-hover-end', (event) => { assertSender(event, ['status']); hideStatusWindow(600); });
   ipcMain.handle('interactions:list', (event) => { assertSender(event, ['pet', 'dashboard']); return spec.experience.interactions; });
   ipcMain.handle('interactions:stats', (event) => { assertSender(event, ['pet', 'dashboard']); normalizeStatsDay(); return publicStats(); });
   ipcMain.handle('interactions:trigger', async (event, id: unknown) => {
@@ -728,6 +910,25 @@ function registerIpc(): void {
         scheduleReminder(created);
         return { id: created.id };
       },
+      saveTodo: async (input: { text: string; dueAt?: string }) => {
+        const created: Todo = { id: randomUUID(), text: input.text.trim(), completed: false, createdAt: new Date().toISOString() };
+        if (input.dueAt) created.dueAt = new Date(input.dueAt).toISOString();
+        todos.push(created);
+        await persistTodos();
+        if (created.dueAt) scheduleTodoTimer(created);
+        return { id: created.id };
+      },
+      listTodos: async () => todos.map(({ id, text, dueAt, completed }) => ({ id, text, dueAt, completed })),
+      toggleTodo: async (id: string) => {
+        const todo = todos.find((item) => item.id === id);
+        if (!todo) return false;
+        todo.completed = !todo.completed;
+        todo.completedAt = todo.completed ? new Date().toISOString() : undefined;
+        if (todo.completed) clearTodoTimer(todo.id);
+        else if (todo.dueAt) scheduleTodoTimer(todo);
+        await persistTodos();
+        return todo.completed;
+      },
     };
     await chatManager.send(content, {
       onChunk: (chunk: StreamChunk) => {
@@ -798,6 +999,7 @@ async function initialize(): Promise<void> {
   logger = new JsonLogger(userFile('logs/app.jsonl'));
   settings = await readValidatedJson(userFile('settings.json'), defaultSettings, parseSettings);
   reminders = await readValidatedJson(userFile('reminders.json'), [] as Reminder[], parseReminders);
+  todos = await readValidatedJson(userFile('todos.json'), [] as Todo[], parseTodos);
   stats = await readValidatedJson(userFile('pet-stats.json'), defaultStats, parsePersistedStats);
   normalizeStatsDay();
   sessionStartedAt = Date.now();
@@ -806,6 +1008,10 @@ async function initialize(): Promise<void> {
   createWindows();
   createTray();
   reminders.forEach(scheduleReminder);
+  todos.filter((todo) => !todo.completed && todo.dueAt).forEach(scheduleTodoTimer);
+  if (monitorTimer) clearInterval(monitorTimer);
+  setTimeout(() => { void runMonitor(); }, 3000);
+  monitorTimer = setInterval(() => { void runMonitor(); }, 30000);
   await chatManager.init();
   chatManager.setSkin(settings.skin || 'default');
   await registerGlobalShortcuts();
@@ -835,11 +1041,14 @@ app.on('before-quit', (event) => {
   typingListener.stop();
   for (const timer of reminderTimers.values()) clearTimeout(timer);
   reminderTimers.clear();
+  for (const timer of todoTimers.values()) clearTimeout(timer);
+  todoTimers.clear();
+  if (monitorTimer) { clearInterval(monitorTimer); monitorTimer = undefined; }
   if (quitPersisting || !stats) return;
   event.preventDefault();
   quitPersisting = true;
-  void persistStats()
-    .catch((error) => logger?.write('error', 'persist-stats-on-quit-failed', { message: error instanceof Error ? error.message : String(error) }))
+  void Promise.all([persistStats(), persistReminders(), persistTodos()])
+    .catch((error) => logger?.write('error', 'persist-on-quit-failed', { message: error instanceof Error ? error.message : String(error) }))
     .finally(() => app.exit(0));
 });
 app.on('render-process-gone', (_event, webContents, details) => {

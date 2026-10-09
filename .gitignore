@@ -19,3 +19,5 @@ src/assets/pet/
 *.log
 .DS_Store
 Thumbs.db
+src/assets/skins/default/
+src/assets/skins/classic/

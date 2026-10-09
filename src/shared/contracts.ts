@@ -116,6 +116,7 @@ export interface Settings {
   clickThrough: boolean;
   petScale: number;
   skin: string;
+  voiceAnnounce: boolean;
 }
 
 export interface Reminder {
@@ -123,6 +124,32 @@ export interface Reminder {
   text: string;
   dueAt: string;
   createdAt: string;
+}
+
+export interface Todo {
+  id: string;
+  text: string;
+  dueAt?: string;
+  completed: boolean;
+  completedAt?: string;
+  createdAt: string;
+}
+
+export interface TodoInput {
+  text: string;
+  dueAt?: string;
+}
+
+export interface TopMemoryProcess {
+  name: string;
+  memBytes: number;
+}
+
+export interface DiskCleanupItem {
+  id: string;
+  label: string;
+  bytes: number;
+  path?: string;
 }
 
 export interface StateActivity {
@@ -212,6 +239,28 @@ export interface PetAPI {
     onTypingStatus: (listener: (status: TypingStatus) => void) => () => void;
     onScreenshotDone?: (listener: (payload: { file: string; size: { width: number; height: number } }) => void) => () => void;
     onScreenshotFailed?: (listener: (payload: { message: string }) => void) => () => void;
+    onMonitorAlert?: (listener: (text: string) => void) => () => void;
+  };
+  system: {
+    stats: () => Promise<{
+      memory: { totalBytes: number; usedBytes: number; usedPercent: number };
+      disk: { totalBytes: number; freeBytes: number; usedPercent: number };
+      battery: { present: boolean; percent?: number; state: string; timeRemaining?: string };
+      net: { downBps: number; upBps: number; interfaceName: string };
+    }>;
+    topMemory: () => Promise<TopMemoryProcess[]>;
+    cleanupScan: () => Promise<{ items: DiskCleanupItem[]; totalBytes: number }>;
+    cleanupRun: (ids: string[]) => Promise<{ freedBytes: number }>;
+    hoverShow: () => Promise<void>;
+    hoverHide: () => Promise<void>;
+    statusHoverStart: () => Promise<void>;
+    statusHoverEnd: () => Promise<void>;
+  };
+  todos: {
+    list: () => Promise<Todo[]>;
+    add: (input: TodoInput) => Promise<Todo>;
+    toggle: (id: string) => Promise<boolean>;
+    remove: (id: string) => Promise<boolean>;
   };
   chat?: {
     send: (
@@ -307,7 +356,7 @@ export function assertSettingsPatch(value: unknown): asserts value is Partial<Se
     throw new TypeError('Invalid settings patch');
   }
   const obj = value as Record<string, unknown>;
-  const booleanKeys = new Set(['edgeSnap', 'alwaysOnTop', 'typingReaction', 'clickThrough']);
+  const booleanKeys = new Set(['edgeSnap', 'alwaysOnTop', 'typingReaction', 'clickThrough', 'voiceAnnounce']);
   const allowedKeys = new Set([...booleanKeys, 'petScale', 'skin']);
   for (const [key, item] of Object.entries(obj)) {
     if (!allowedKeys.has(key)) throw new TypeError(`Unknown settings field: ${key}`);
@@ -329,6 +378,19 @@ export function assertReminderInput(value: unknown): asserts value is { text: st
   }
   if (typeof obj.dueAt !== 'string' || isNaN(Date.parse(obj.dueAt))) {
     throw new TypeError('Invalid reminder dueAt');
+  }
+}
+
+export function assertTodoInput(value: unknown): asserts value is TodoInput {
+  if (!value || typeof value !== 'object') {
+    throw new TypeError('Invalid todo input');
+  }
+  const obj = value as Record<string, unknown>;
+  if (typeof obj.text !== 'string' || obj.text.trim().length === 0 || obj.text.length > 500) {
+    throw new TypeError('Invalid todo text');
+  }
+  if (obj.dueAt !== undefined && (typeof obj.dueAt !== 'string' || isNaN(Date.parse(obj.dueAt)))) {
+    throw new TypeError('Invalid todo dueAt');
   }
 }
 

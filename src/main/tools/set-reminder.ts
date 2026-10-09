@@ -6,7 +6,7 @@ interface ParsedTime {
   display: string;
 }
 
-function parseRelative(text: string, now = Date.now()): ParsedTime | null {
+export function parseRelative(text: string, now = Date.now()): ParsedTime | null {
   const m = text.match(/(\d+)\s*(秒|分钟|分|小时|天|日|周|个星期)/i);
   if (!m) return null;
   const n = Number(m[1]);
@@ -27,7 +27,7 @@ function parseRelative(text: string, now = Date.now()): ParsedTime | null {
   return { iso, display: text };
 }
 
-function parseAbsolute(text: string): ParsedTime | null {
+export function parseAbsolute(text: string): ParsedTime | null {
   // 接受 "今天 14:30"、"明天下午 3 点"、"2026-09-09 14:30"
   const now = new Date();
   let candidate: Date | null = null;

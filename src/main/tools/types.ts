@@ -7,6 +7,12 @@ export interface ToolContext {
   triggerInteraction?: (id: string) => Promise<void>;
   /**: 用于新建提醒（set_reminder 工具调用） */
   saveReminder?: (input: { text: string; dueAt: string }) => Promise<{ id: string }>;
+  /**: 用于新建待办（add_todo 工具调用） */
+  saveTodo?: (input: { text: string; dueAt?: string }) => Promise<{ id: string }>;
+  /**: 列出待办（list_todos 工具调用） */
+  listTodos?: () => Promise<Array<{ id: string; text: string; dueAt?: string; completed: boolean }>>;
+  /**: 完成/取消待办（complete_todo 工具调用） */
+  toggleTodo?: (id: string) => Promise<boolean>;
 }
 
 export interface ToolExecutionResult {
@@ -14,7 +20,7 @@ export interface ToolExecutionResult {
   content: string;
   /**: 给用户看的辅助数据（可选） */
   uiHint?: {
-    kind: 'reminder' | 'interaction' | 'translation' | 'note' | 'stock' | 'search' | 'music' | 'screenshot' | 'info';
+    kind: 'reminder' | 'interaction' | 'translation' | 'note' | 'stock' | 'search' | 'music' | 'screenshot' | 'info' | 'todo';
     payload?: Record<string, unknown>;
   };
 }

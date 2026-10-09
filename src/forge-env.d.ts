@@ -6,6 +6,8 @@ declare const DASHBOARD_WINDOW_WEBPACK_ENTRY: string;
 declare const DASHBOARD_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 declare const CHAT_WINDOW_WEBPACK_ENTRY: string;
 declare const CHAT_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
+declare const STATUS_WINDOW_WEBPACK_ENTRY: string;
+declare const STATUS_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 declare const __non_webpack_require__: NodeRequire;
 
 declare module '*.png' {

@@ -198,6 +198,14 @@ container.addEventListener('contextmenu', (e) => {
   window.petAPI?.window.showContextMenu().catch(() => {});
 });
 
+// 悬停显示速览状态卡
+container.addEventListener('pointerenter', () => {
+  window.petAPI?.system.hoverShow().catch(() => {});
+});
+container.addEventListener('pointerleave', () => {
+  window.petAPI?.system.hoverHide().catch(() => {});
+});
+
 
 // 监听状态活动
 window.petAPI?.events.onStateActivity((activity: StateActivity) => {
@@ -208,6 +216,11 @@ window.petAPI?.events.onStateActivity((activity: StateActivity) => {
   if (activity.feedback) {
     showFeedback(activity.feedback);
   }
+});
+
+// 监控异常汇报（磁盘满、低电量、大流量下载）
+window.petAPI?.events.onMonitorAlert?.((text: string) => {
+  showFeedback(text);
 });
 
 // 初始化

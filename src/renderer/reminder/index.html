@@ -1,12 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>提醒</title>
-  <style>
-    * {
+  <meta charset="UTF-8">  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">  <meta name="viewport" content="width=device-width,initial-scale=1">  <title>提醒</title>  <style>* {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
@@ -123,26 +118,7 @@
     .reminder-list::-webkit-scrollbar-thumb {
       background: var(--accent, #ffc987);
       border-radius: 2px;
-    }
-  </style>
+    }</style>
 </head>
-<body>
-  <div id="reminder-card">
-    <div class="card">
-      <div class="title">⏰ 添加提醒</div>
-      <div class="input-group">
-        <label>提醒内容</label>
-        <input type="text" id="reminder-text" placeholder="输入提醒内容...">
-      </div>
-      <div class="input-group">
-        <label>提醒时间</label>
-        <input type="datetime-local" id="reminder-time">
-      </div>
-      <div class="btn-row">
-        <button class="btn-secondary" id="cancel-btn">取消</button>
-        <button class="btn-primary" id="save-btn">保存</button>
-      </div>
-    </div>
-  </div>
-</body>
+<body><div id="reminder-card"><div class="card"><div class="title">⏰ 添加提醒</div><div class="input-group"><label>提醒内容</label> <input id="reminder-text" placeholder="输入提醒内容..."></div><div class="input-group"><label>提醒时间</label> <input type="datetime-local" id="reminder-time"></div><div class="btn-row"><button class="btn-secondary" id="cancel-btn">取消</button> <button class="btn-primary" id="save-btn">保存</button></div></div></div></body>
 </html>
