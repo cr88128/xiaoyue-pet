@@ -276,6 +276,250 @@
       color: var(--muted, #9a7b6a);
       text-align: center;
     }
+    .todo-add-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .todo-input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid var(--accent, #ffc987);
+      border-radius: 8px;
+      background: white;
+      font-size: 13px;
+      color: var(--text, #3a2a20);
+      outline: none;
+      min-width: 0;
+    }
+    .todo-input:focus {
+      border-color: var(--primary, #ff8a24);
+    }
+    .todo-due-input {
+      width: 150px;
+      padding: 8px 10px;
+      border: 1px solid var(--accent, #ffc987);
+      border-radius: 8px;
+      background: white;
+      font-size: 12px;
+      color: var(--text, #3a2a20);
+      outline: none;
+      flex-shrink: 0;
+    }
+    .todo-due-input:focus {
+      border-color: var(--primary, #ff8a24);
+    }
+    .todo-add-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary, #ff8a24);
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--background, #fff7ed);
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--text, #3a2a20);
+    }
+    .todo-item.done .todo-text {
+      text-decoration: line-through;
+      color: var(--muted, #9a7b6a);
+    }
+    .todo-check {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--accent, #ffc987);
+      border-radius: 50%;
+      cursor: pointer;
+      flex-shrink: 0;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: white;
+      transition: all 0.2s;
+    }
+    .todo-check.done {
+      background: var(--primary, #ff8a24);
+      border-color: var(--primary, #ff8a24);
+    }
+    .todo-text {
+      flex: 1;
+      word-break: break-word;
+    }
+    .todo-due {
+      font-size: 11px;
+      color: var(--muted, #9a7b6a);
+      flex-shrink: 0;
+    }
+    .todo-due.overdue {
+      color: #e04f4f;
+      font-weight: 600;
+    }
+    .todo-del {
+      border: none;
+      background: transparent;
+      color: var(--muted, #9a7b6a);
+      font-size: 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0 2px;
+      border-radius: 4px;
+    }
+    .todo-del:hover {
+      color: #e04f4f;
+      background: var(--background, #fff7ed);
+    }
+    .todo-empty {
+      color: var(--muted, #9a7b6a);
+      font-size: 12px;
+      padding: 8px 0;
+    }
+    .todo-done-header {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted, #9a7b6a);
+    }
+    .monitor-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .monitor-item {
+      background: var(--background, #fff7ed);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .monitor-label {
+      font-size: 12px;
+      color: var(--muted, #9a7b6a);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .monitor-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text, #3a2a20);
+    }
+    .monitor-value small {
+      font-size: 11px;
+      font-weight: normal;
+      color: var(--muted, #9a7b6a);
+      margin-left: 2px;
+    }
+    .monitor-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surface, #ffffff);
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .monitor-bar > div {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--primary, #ff8a24);
+      transition: width 0.4s ease;
+    }
+    .monitor-bar > div.warn {
+      background: #e04f4f;
+    }
+    .monitor-detail {
+      font-size: 11px;
+      color: var(--muted, #9a7b6a);
+      margin-top: 4px;
+    }
+    .top-mem-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .top-mem-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text, #3a2a20);
+      padding: 6px 10px;
+      background: var(--background, #fff7ed);
+      border-radius: 10px;
+    }
+    .top-mem-item .name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .top-mem-item .mem {
+      color: var(--muted, #9a7b6a);
+      font-variant-numeric: tabular-nums;
+    }
+    .cleanup-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .cleanup-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--text, #3a2a20);
+      padding: 6px 10px;
+      background: var(--background, #fff7ed);
+      border-radius: 10px;
+    }
+    .cleanup-item input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--primary, #ff8a24);
+    }
+    .cleanup-item .label { flex: 1; }
+    .cleanup-item .size { color: var(--muted, #9a7b6a); font-variant-numeric: tabular-nums; }
+    .cleanup-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted, #9a7b6a);
+    }
+    .cleanup-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--primary, #ff8a24);
+      cursor: pointer;
+    }
+    .cleanup-btn:disabled { opacity: 0.5; cursor: default; }
+    .cleanup-note {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted, #9a7b6a);
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -324,6 +568,58 @@
         </div>
 
         <div class="settings-group">
+          <div class="section-title">✅ 待办清单</div>
+          <div class="todo-add-row">
+            <input class="todo-input" id="todo-input" placeholder="添加待办，例如：提交周报" maxlength="500" />
+            <input class="todo-due-input" id="todo-due-input" type="datetime-local" title="可选截止时间（到点弹窗提醒）" />
+            <button class="todo-add-btn" id="todo-add-btn">添加</button>
+          </div>
+          <div class="todo-list" id="todo-list"></div>
+        </div>
+
+        <div class="settings-group">
+          <div class="section-title">📊 系统监控</div>
+          <div class="monitor-grid">
+            <div class="monitor-item">
+              <div class="monitor-label"><span>🧠 内存</span><span id="mem-pct">--</span></div>
+              <div class="monitor-bar"><div id="mem-bar" style="width:0%"></div></div>
+              <div class="monitor-detail" id="mem-detail">--</div>
+            </div>
+            <div class="monitor-item">
+              <div class="monitor-label"><span>💽 磁盘</span><span id="disk-pct">--</span></div>
+              <div class="monitor-bar"><div id="disk-bar" style="width:0%"></div></div>
+              <div class="monitor-detail" id="disk-detail">--</div>
+            </div>
+            <div class="monitor-item">
+              <div class="monitor-label"><span>🔋 电池</span><span id="bat-pct">--</span></div>
+              <div class="monitor-bar"><div id="bat-bar" style="width:0%"></div></div>
+              <div class="monitor-detail" id="bat-detail">--</div>
+            </div>
+            <div class="monitor-item">
+              <div class="monitor-label"><span>🌐 网速</span><span id="net-iface">--</span></div>
+              <div class="monitor-value" id="net-down">0 KB/s</div>
+              <div class="monitor-detail" id="net-up">↑ 0 KB/s</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="section-title">🔥 内存大户</div>
+          <div class="top-mem-list" id="top-mem-list"></div>
+          <div class="cleanup-note">按进程占用内存排序（同名进程已合并）。macOS 缓存会自动回收，关掉大户才是真释放。</div>
+        </div>
+
+        <div class="settings-group">
+          <div class="section-title">🧹 磁盘清理</div>
+          <div class="cleanup-list" id="cleanup-list"></div>
+          <div class="cleanup-foot">
+            <span id="cleanup-total">--</span>
+            <button class="cleanup-btn" id="cleanup-btn">清理所选</button>
+          </div>
+          <div class="cleanup-note">只删除所选位置内的内容、保留目录本身；缓存和日志会由应用自动重建，不碰你的文稿、照片和下载内容。废纸篓清空后不可恢复。</div>
+        </div>
+
+        <div class="settings-group">
           <div class="section-title">⚙️ 设置</div>
           <div class="setting-item">
             <div>
@@ -338,6 +634,13 @@
               <div class="setting-desc">点击穿透到后面的窗口</div>
             </div>
             <div class="toggle" id="toggle-click-through"></div>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">🔊 语音播报</div>
+              <div class="setting-desc">提醒、待办到期、监控异常时念出来</div>
+            </div>
+            <div class="toggle active" id="toggle-voice-announce"></div>
           </div>
           <div class="setting-item">
             <div>
@@ -362,6 +665,7 @@
             <div class="size-selector" id="skin-selector">
               <button class="size-btn active" data-skin="default">女仆小悦</button>
               <button class="size-btn" data-skin="classic">经典小悦</button>
+              <button class="size-btn" data-skin="shiba">柴犬小悦</button>
             </div>
           </div>
         </div>
